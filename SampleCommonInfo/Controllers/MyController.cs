@@ -58,8 +58,8 @@ namespace SampleCommonInfo.Controllers
                     },
                     new Company
                     {
-                        id_company = 1706,
-                        name = "W-demo"
+                        id_company = 1146,
+                        name = "SuperSports VN"
                     }
                 }
             };
