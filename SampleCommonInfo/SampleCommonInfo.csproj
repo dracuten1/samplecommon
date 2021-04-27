@@ -6,8 +6,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AWSSDK.SecretsManager" Version="3.7.0.14" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="SecretManager">
+      <HintPath>..\..\SetcretManager\SetcretManager\bin\Release\netcoreapp3.1\SecretManager.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
   </ItemGroup>
 
 

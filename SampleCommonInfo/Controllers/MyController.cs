@@ -1,10 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using SampleCommonInfo.CommonModels;
 using SampleCommonInfo.Contexts;
+using SampleCommonInfo.Secrets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace SampleCommonInfo.Controllers
@@ -16,15 +19,17 @@ namespace SampleCommonInfo.Controllers
     }
     public class Company
     {
-        [JsonProperty("id_company")] public int id_company { get; set; }
+        [JsonProperty("id_company")] public long id_company { get; set; }
         [JsonProperty("name")] public string name { get; set; }
     }
     public class MyController : ControllerBase
     {
         private CompanyInstanceRepository _companyInstanceRepository = new CompanyInstanceRepository();
-        public MyController()
-        {
+        private readonly CommonSecret commonSecret;
 
+        public MyController(CommonSecret commonSecret)
+        {
+            this.commonSecret = commonSecret;
         }
         [HttpGet("/companies/by-id/{companyID}/workers/config")]
         public async Task<JsonResult> GetInstance([FromRoute(Name = "companyID")]int CompanyID)
@@ -44,25 +49,37 @@ namespace SampleCommonInfo.Controllers
             };
             return new JsonResult(data);
         }
-        [HttpGet("/companies")]
-        public async Task<JsonResult> GetCompany()
+        [HttpGet("/companies/by-user")]
+        public async Task<JsonResult> GetCompany([FromHeader] string authorization)
         {
+            var httpRequestMessage = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(commonSecret.CommonInfoHost+ "/companies/by-user"),
+                Headers = {
+                        { HttpRequestHeader.Accept.ToString(), "application/json" },
+                        { "authorization", authorization }
+                    },
+            };
+            using var client = new HttpClient();
+            using var res = await client.SendAsync(httpRequestMessage, HttpContext.RequestAborted);
+            if (res.StatusCode == HttpStatusCode.Unauthorized) throw new UnauthorizedAccessException("Unauthorized");
+            var strResult = await res.Content.ReadAsStringAsync();
+            if (res.StatusCode != HttpStatusCode.OK)
+            {
+                throw new Exception(strResult);
+            }           
+            
+            var commonResult = JsonConvert.DeserializeObject<CommonCompanyMultiResponse>(strResult);
+           
             var data = new ResponsePattern
             {
-                Data = new List<Company>()
+                Data = commonResult.Data.Companies.Select(c => new Company
                 {
-                    new Company
-                    {
-                        id_company = 2193,
-                        name = "Nguyen Kim"
-                    },
-                    new Company
-                    {
-                        id_company = 1146,
-                        name = "SuperSports VN"
-                    }
-                }
-            };
+                    id_company = c.ID,
+                    name = c.Name
+                })
+        };
             return new JsonResult(data);
         }
         [HttpPost("/companies/by-id/{companyID}/workers/config")]
