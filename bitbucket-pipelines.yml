@@ -1,0 +1,32 @@
+pipelines:
+  branches:
+    staging:
+      - step:
+          script:
+            - echo $CodeCommitKey > ~/.ssh/codecommit_rsa.tmp
+            - base64 -di ~/.ssh/codecommit_rsa.tmp > ~/.ssh/codecommit_rsa
+            - chmod 400 ~/.ssh/codecommit_rsa
+            - echo $CodeCommitConfig > ~/.ssh/config.tmp
+            - base64 -di  ~/.ssh/config.tmp > ~/.ssh/config
+            - set +e
+            - ssh -o StrictHostKeyChecking=no $CodeCommitHost
+            - set -e
+            - git remote add codecommit ssh://$CodeCommitRepo
+            - git log --oneline
+            - echo $BITBUCKET_BRANCH
+            - git push codecommit $BITBUCKET_BRANCH:master       
+    production:
+      - step:
+          script:
+            - echo $CodeCommitKey_Live > ~/.ssh/codecommit_rsa.tmp
+            - base64 -di ~/.ssh/codecommit_rsa.tmp > ~/.ssh/codecommit_rsa
+            - chmod 400 ~/.ssh/codecommit_rsa
+            - echo $CodeCommitConfig_Live > ~/.ssh/config.tmp
+            - base64 -di  ~/.ssh/config.tmp > ~/.ssh/config
+            - set +e
+            - ssh -o StrictHostKeyChecking=no $CodeCommitHost_Live
+            - set -e
+            - git remote add codecommit ssh://$CodeCommitRepo_Live
+            - git log --oneline
+            - echo $BITBUCKET_BRANCH
+            - git push codecommit $BITBUCKET_BRANCH:master
