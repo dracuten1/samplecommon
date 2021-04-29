@@ -14,7 +14,7 @@ namespace SampleCommonInfo.Controllers
 {
     public class ResponsePattern
     {
-        [JsonProperty("err")] public string ErrorMessage { get; set; } = null;
+        [JsonProperty("err")] public string err { get; set; } = null;
         [JsonProperty("data")] public object Data { get; set; } = null;
     }
     public class Company
@@ -50,7 +50,7 @@ namespace SampleCommonInfo.Controllers
             return new JsonResult(data);
         }
         [HttpGet("/companies/by-user")]
-        public async Task<JsonResult> GetCompany([FromHeader] string authorization)
+        public async Task<ActionResult> GetCompany([FromHeader] string authorization)
         {
             var httpRequestMessage = new HttpRequestMessage
             {
@@ -63,7 +63,7 @@ namespace SampleCommonInfo.Controllers
             };
             using var client = new HttpClient();
             using var res = await client.SendAsync(httpRequestMessage, HttpContext.RequestAborted);
-            if (res.StatusCode == HttpStatusCode.Unauthorized) throw new UnauthorizedAccessException("Unauthorized");
+            if (res.StatusCode == HttpStatusCode.Unauthorized) return new UnauthorizedResult();
             var strResult = await res.Content.ReadAsStringAsync();
             if (res.StatusCode != HttpStatusCode.OK)
             {
@@ -98,7 +98,7 @@ namespace SampleCommonInfo.Controllers
             {
                 var data = new ResponsePattern
                 {
-                    ErrorMessage = "Duplicate type " + e.Message
+                    err = "Duplicate type " + e.Message
                 };
                 HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
                 return new JsonResult(data);
